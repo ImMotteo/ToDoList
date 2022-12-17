@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+
+  <div class="main-area">
+
+      <div class="title"><h1>To-Do List</h1></div>
+
+          <div class="add-task">
+              <form onsubmit = "return false">
+                  <input onkeydown="enterKey(event)" id="input-task" class="todo-input" type="text" placeholder="Нажмите для ввода">
+                  <button type="button" id="add-task-button" class="show" onclick="addTodo()">ADD TASK</button>
+                  <button type="button" id="edit-task-button" class="hide" onclick="applyEdit()">EDIT TASK</button>
+              </form>
+          </div>
+
+            <div class="task-area">
+                <div class="task_list">
+                    <p class="welcome">Ваши задачи появятся здесь! Для добавления задачи напишите её в поле и нажмите
+                        "ADD TASK"</p>
+
+                    <ul id="task-list" class="todo-items">
+
+
+                    </ul>
+                </div>
+            </div>
+  </div>
+
+</main>
+
+<script>
+    const todoForm = document.querySelector(".add-task");
+    const todoInput = document.querySelector(".todo-input");
+    const todoItemsList = document.querySelector(".todo-items");
+
+    let todos = [];
+    let edit;
+
+  
+    function enterKey(event) {
+        if (event.key !== "Enter") return false;
+        if (document.querySelector("#add-task-button").classList.contains("show")) {
+            addTodo();
+        } else {
+            applyEdit()
+        }
+           
+    };
+
+    function addTodo() {
+        let task = todoInput.value; 
+        if (task !== '') {
+            const todo = {
+                id: Date.now(),
+                name: task,
+                completed: false,
+                favorite: false
+
+            };
+
+            todos.push(todo);
+            addToLocalStorage(todos);
+
+            todoInput.value = "";
+            renderTodos(todos);
+
+        }
+    }
+
+
+    function renderTodos(todos) {
+        todoItemsList.innerHTML = '';
+
+        todos.forEach(function(item) {
+            let checked = item.completed ? 'checked' : null;
+                      
+
+            
+
+            let li = document.createElement('li');
+            li.setAttribute('class', 'item');
+            li.setAttribute('data-key', item.id);
+            document.querySelector('.welcome').classList.add("null");
+
+            li.innerHTML = `
+            <div class="task-item">
+                   <div class="inp-task">
+                        <label><button id="edit${item.id}" class="edit_btn"></button></label>
+                       <label><button class="favorite_btn"></button></label>
+                       <label><input class="check" id="check" type="checkbox" ${checked}></label>
+                       <span id="task${item.id}" class="task">${item.name}</span>
+                   </div>
+                   <div class="del"><button class="delete-btn"></button></div>
+            </div>`;
+
+
+            
+            li.querySelector('.favorite_btn').addEventListener('click', () => fav(event, item));
+
+            li.querySelector(`#edit${item.id}`).addEventListener('click', () => editTask(item));
+        
+            
+            if (item.completed === true) {
+                li.querySelector('span').classList.add('done');
+                
+            }
+
+            if (item.favorite === true) {
+                li.querySelector('.favorite_btn').classList.add('favorite_btn_checked')
+                li.querySelector('span').classList.add('favorite');
+            } 
+
+           
+        todoItemsList.append(li);
+            
+        
+        });
+
+              
+    }
+
+    function fav(event, item) {
+        
+        event.target.classList.toggle("favorite_btn_checked");
+        item.favorite = !(item.favorite);
+        document.querySelector(`#task${item.id}`).classList.toggle('favorite'); 
+        addToLocalStorage(todos);
+          
+        }
+
+    function editTask(item) {
+        todoInput.value = item.name;
+        edit = item;
+        document.querySelector("#add-task-button").classList.add("hide");
+        document.querySelector("#add-task-button").classList.remove("show");
+        document.querySelector("#edit-task-button").classList.add("show");
+        document.querySelector("#edit-task-button").classList.remove("hide");
+    }
+
+    function applyEdit() {
+      edit.name = todoInput.value;
+      todoInput.value = '';
+      document.querySelector("#add-task-button").classList.remove("hide");
+        document.querySelector("#add-task-button").classList.add("show");
+        document.querySelector("#edit-task-button").classList.remove("show");
+        document.querySelector("#edit-task-button").classList.add("hide");
+      addToLocalStorage(todos);
+    }
+
+    
+
+   
+
+    
+
+    function addToLocalStorage(todos) {
+        localStorage.setItem('todos', JSON.stringify(todos));
+        renderTodos(todos);
+    }
+
+    function getFromLocalStorage() {
+        const reference = localStorage.getItem('todos');
+        if (reference) {
+            todos = JSON.parse(reference);
+            renderTodos(todos)
+        }
+
+    }
+
+    function toggle(id) {
+        todos.forEach(function(item) {
+            if (item.id == id) {
+                item.completed = !item.completed;
+            }
+
+        });
+
+        addToLocalStorage(todos);
+
+    }
+
+
+    function deleteTodo(id) {
+        todos = todos.filter(function(item) {
+            return item.id != id;
+        });
+
+        addToLocalStorage(todos);
+    }
+
+    getFromLocalStorage();
+
+    todoItemsList.addEventListener('click', function(event) {
+        if (event.target.id == 'check') {
+            toggle(event.target.closest('li').getAttribute('data-key'));
+        }
+
+
+      
+          if (event.target.classList.contains('delete-btn')) {
+            deleteTodo(event.target.closest('li').getAttribute('data-key'));
+            if (todos.length == 0) {
+                document.querySelector('.welcome').classList.remove('null');
+            }
+        }
+
+        
+
+    });
+
+    
+
+</script>
+</body>
+</html>
